@@ -1,0 +1,74 @@
+---
+- name: Configure webserver
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: Update all packages
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    # Security Hardening
+    - name: Disable root SSH login
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Disable password authentication
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+
+    - name: Set SSH idle timeout to 5 minutes
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^ClientAliveInterval'
+        line: 'ClientAliveInterval 300'
+        state: present
+
+    - name: Restart SSH to apply hardening changes
+      service:
+        name: sshd
+        state: restarted
+
+    - name: Install firewalld
+      yum:
+        name: firewalld
+        state: present
+
+    - name: Start and enable firewalld
+      service:
+        name: firewalld
+        state: started
+        enabled: yes
+
+    - name: Allow SSH through firewall
+      command: firewall-cmd --permanent --add-service=ssh
+
+    - name: Allow HTTP through firewall
+      command: firewall-cmd --permanent --add-service=http
+
+    - name: Reload firewalld
+      command: firewall-cmd --reload
