@@ -125,3 +125,12 @@ resource "aws_instance" "main" {
   }
 }
 
+# Elastic IP
+resource "aws_eip" "main" {
+  instance = aws_instance.main.id
+  domain   = "vpc"
+  tags = {
+    Name    = "${var.project_name}-eip"
+    Project = var.project_name
+  }
+}
