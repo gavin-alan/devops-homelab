@@ -3,7 +3,7 @@
 End-to-end DevOps pipeline built for learning and portfolio purposes.
 
 ## Status
-Phase 1 in progress — Terraform complete, Ansible in progress.
+Phase 1 complete. Phase 2 in progress — Docker app + GitHub Actions CI/CD.
 
 ## Stack
 - **Terraform** — AWS infrastructure provisioning
