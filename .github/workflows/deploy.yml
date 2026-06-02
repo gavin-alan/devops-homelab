@@ -23,12 +23,9 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/app
-            git pull https://github.com/gavin-alan/devops-homelab.git main
-            cp devops-homelab/app/app.py .
-            cp devops-homelab/app/requirements.txt .
-            cp devops-homelab/app/Dockerfile .
-            rm -rf devops-homelab
+            cd ~/devops-homelab
+            git pull origin main
+            cd app
             docker stop homelab-app || true
             docker rm homelab-app || true
             docker rmi devops-homelab:latest || true
