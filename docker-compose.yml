@@ -2,7 +2,7 @@
 
 services:
   app:
-    build: ./app
+    image: devops-homelab-app:latest
     container_name: homelab-app
     ports:
       - "80:5000"
