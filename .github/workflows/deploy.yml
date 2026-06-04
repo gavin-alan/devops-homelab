@@ -13,21 +13,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build Docker image
-        run: docker build -t devops-homelab:latest ./app
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: GRAFANA_PASSWORD
           script: |
             cd ~/devops-homelab
             git pull origin main
-            cd app
-            docker stop homelab-app || true
-            docker rm homelab-app || true
-            docker rmi devops-homelab:latest || true
-            docker build -t devops-homelab:latest .
-            docker run -d -p 80:5000 --name homelab-app devops-homelab:latest
+            export GRAFANA_PASSWORD="${{ secrets.GRAFANA_PASSWORD }}"
+            docker-compose down
+            docker-compose up -d --build
+        env:
+          GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}
