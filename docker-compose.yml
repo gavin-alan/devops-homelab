@@ -1,6 +1,4 @@
-﻿version: '3.8'
-
-services:
+﻿services:
   app:
     image: devops-homelab-app:latest
     container_name: homelab-app
