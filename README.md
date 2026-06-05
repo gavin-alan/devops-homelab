@@ -19,10 +19,14 @@ Phase 3 complete. Phase 4 coming — GenAI layer (AWS Bedrock + FastAPI + ECR/EC
 - [x] Phase 3: Monitoring (Prometheus + Grafana)
 - [ ] Phase 4: GenAI layer (AWS Bedrock + FastAPI + ECR/ECS)
 
+## Monitoring Dashboard
+![Grafana Dashboard](images/grafana-dashboard.png)
+
 ## How it works
 Every push to main automatically triggers the CI/CD pipeline which pulls the latest code, rebuilds the Docker image, and redeploys the full stack via Docker Compose — zero manual steps.
 
-## Monitoring
-- Grafana dashboard: http://107.21.212.161:3000
+## Live Endpoints
+- App: http://107.21.212.161
+- Grafana: http://107.21.212.161:3000
 - Prometheus: http://107.21.212.161:9090
-- App metrics endpoint: http://107.21.212.161/metrics
+- Metrics: http://107.21.212.161/metrics
