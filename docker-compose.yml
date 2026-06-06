@@ -1,11 +1,10 @@
-﻿services:
+services:
   app:
     image: devops-homelab-app:latest
     container_name: homelab-app
     ports:
-      - "80:5000"
+      - "80:8000"
     restart: unless-stopped
-
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -14,24 +13,21 @@
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     restart: unless-stopped
-
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_ADMIN_PASSWORD=
     volumes:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
-
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
     ports:
       - "9100:9100"
     restart: unless-stopped
-
 volumes:
   grafana-data:

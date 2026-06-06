@@ -1,16 +1,22 @@
-﻿from flask import Flask
-from prometheus_flask_exporter import PrometheusMetrics
+from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 
-app = Flask(__name__)
-metrics = PrometheusMetrics(app)
+app = FastAPI(
+    title="Gavin Alan - DevOps Home Lab",
+    description="Deployed via Docker, GitHub Actions CI/CD, ECR and ECS.",
+    version="2.0.0"
+)
 
-@app.route('/')
+Instrumentator().instrument(app).expose(app)
+
+@app.get("/")
 def home():
-    return '<h1>Gavin Alan - DevOps Home Lab</h1><p>Deployed via Docker and GitHub Actions CI/CD pipeline.</p><p>Phase 3: Monitoring with Prometheus + Grafana.</p>'
+    return {
+        "name": "Gavin Alan - DevOps Home Lab",
+        "version": "2.0.0",
+        "phase": "Phase 4: FastAPI + AWS Bedrock + ECR/ECS"
+    }
 
-@app.route('/health')
+@app.get("/health")
 def health():
-    return {'status': 'healthy'}, 200
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    return {"status": "healthy"}
