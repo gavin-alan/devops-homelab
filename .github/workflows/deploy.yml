@@ -1,18 +1,40 @@
-﻿name: Deploy to EC2
+name: Deploy to EC2
 
 on:
   push:
     branches:
       - main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+permissions:
+  id-token: write
+  contents: read
 
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image to ECR
+        run: |
+          docker build -t ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest ./app
+          docker push ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -20,11 +42,10 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+            docker pull ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest
             cd ~/devops-homelab
-            git pull origin main
             export GRAFANA_PASSWORD="${{ secrets.GRAFANA_PASSWORD }}"
-            cd app && docker build -t devops-homelab-app:latest . && cd ..
+            export ECR_REGISTRY="${{ secrets.ECR_REGISTRY }}"
             docker-compose down
             docker-compose up -d
-        env:
-          GRAFANA_PASSWORD: ${{ secrets.GRAFANA_PASSWORD }}

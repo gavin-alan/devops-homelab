@@ -31,3 +31,14 @@ module "ec2" {
   security_group_id   = module.security_group.security_group_id
   ssh_public_key_path = "~/.ssh/devops-homelab.pub"
 }
+
+module "ecr" {
+  source       = "./modules/ecr"
+  project_name = var.project_name
+}
+
+module "iam" {
+  source       = "./modules/iam"
+  project_name = var.project_name
+  github_repo  = "gavin-alan/devops-homelab"
+}

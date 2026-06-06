@@ -1,6 +1,6 @@
 services:
   app:
-    image: devops-homelab-app:latest
+    image: ${ECR_REGISTRY}/devops-homelab:latest
     container_name: homelab-app
     ports:
       - "80:8000"
@@ -19,7 +19,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
