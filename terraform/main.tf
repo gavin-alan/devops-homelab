@@ -60,3 +60,9 @@ module "ecs" {
   subnet_id               = module.vpc.subnet_id
   security_group_id       = module.security_group.security_group_id
 }
+
+module "cloudwatch" {
+  source       = "./modules/cloudwatch"
+  project_name = var.project_name
+  alarm_email  = "cloud01@gavinalan.com"
+}
