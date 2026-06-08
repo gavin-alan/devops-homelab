@@ -31,7 +31,7 @@ jobs:
           docker build -t ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest ./app
           docker push ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest
 
-  deploy:
+  deploy-app:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
@@ -41,10 +41,28 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Deploy to ECS
+      - name: Deploy app to ECS
         run: |
           aws ecs update-service \
             --cluster devops-homelab-cluster \
             --service devops-homelab-service \
             --force-new-deployment \
             --region us-east-1
+
+  deploy-monitoring:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy monitoring stack
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/devops-homelab
+            export GRAFANA_PASSWORD="${{ secrets.GRAFANA_PASSWORD }}"
+            docker-compose up -d
