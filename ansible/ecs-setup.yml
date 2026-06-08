@@ -1,0 +1,30 @@
+---
+- name: Configure ECS agent on EC2
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install ECS repo
+      command: amazon-linux-extras install -y ecs
+
+    - name: Configure ECS cluster name
+      lineinfile:
+        path: /etc/ecs/ecs.config
+        line: 'ECS_CLUSTER=devops-homelab-cluster'
+        create: yes
+
+    - name: Enable task IAM role
+      lineinfile:
+        path: /etc/ecs/ecs.config
+        line: 'ECS_ENABLE_TASK_IAM_ROLE=true'
+        create: yes
+
+    - name: Start and enable ECS agent
+      service:
+        name: ecs
+        state: started
+        enabled: yes
+
+    - name: Install AWS CLI
+      yum:
+        name: awscli
+        state: present

@@ -17,3 +17,13 @@ output "github_actions_role_arn" {
   description = "ARN of the GitHub Actions IAM role"
   value       = module.iam.github_actions_role_arn
 }
+
+output "ecs_cluster_name" {
+  description = "ECS cluster name"
+  value       = module.ecs.cluster_name
+}
+
+output "ecs_service_name" {
+  description = "ECS service name"
+  value       = module.ecs.service_name
+}

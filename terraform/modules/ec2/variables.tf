@@ -23,3 +23,8 @@ variable "ssh_public_key_path" {
   description = "Path to the SSH public key"
   type        = string
 }
+
+variable "instance_profile_name" {
+  description = "Name of the IAM instance profile to attach"
+  type        = string
+}

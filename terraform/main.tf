@@ -23,13 +23,20 @@ module "security_group" {
   vpc_id       = module.vpc.vpc_id
 }
 
+module "iam" {
+  source       = "./modules/iam"
+  project_name = var.project_name
+  github_repo  = "gavin-alan/devops-homelab"
+}
+
 module "ec2" {
-  source              = "./modules/ec2"
-  project_name        = var.project_name
-  instance_type       = var.instance_type
-  subnet_id           = module.vpc.subnet_id
-  security_group_id   = module.security_group.security_group_id
-  ssh_public_key_path = "~/.ssh/devops-homelab.pub"
+  source                = "./modules/ec2"
+  project_name          = var.project_name
+  instance_type         = var.instance_type
+  subnet_id             = module.vpc.subnet_id
+  security_group_id     = module.security_group.security_group_id
+  ssh_public_key_path   = "~/.ssh/devops-homelab.pub"
+  instance_profile_name = module.iam.ec2_instance_profile_name
 }
 
 module "ecr" {
@@ -37,8 +44,13 @@ module "ecr" {
   project_name = var.project_name
 }
 
-module "iam" {
-  source       = "./modules/iam"
-  project_name = var.project_name
-  github_repo  = "gavin-alan/devops-homelab"
+module "ecs" {
+  source                  = "./modules/ecs"
+  project_name            = var.project_name
+  aws_region              = var.aws_region
+  ecr_repository_url      = module.ecr.repository_url
+  task_execution_role_arn = module.iam.ecs_task_execution_role_arn
+  task_role_arn           = module.iam.ecs_task_role_arn
+  subnet_id               = module.vpc.subnet_id
+  security_group_id       = module.security_group.security_group_id
 }
