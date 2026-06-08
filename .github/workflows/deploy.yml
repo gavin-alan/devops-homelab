@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and push image to ECR
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest ./app
+          docker build --no-cache -t ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest ./app
           docker push ${{ secrets.ECR_REGISTRY }}/devops-homelab:latest
 
   deploy-app:
