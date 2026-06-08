@@ -17,9 +17,6 @@ AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 S3_BUCKET = os.getenv("S3_BUCKET", "devops-homelab-documents")
 BEDROCK_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
 
-bedrock = boto3.client("bedrock-runtime", region_name=AWS_REGION)
-s3 = boto3.client("s3", region_name=AWS_REGION)
-
 class AskRequest(BaseModel):
     question: str
 
@@ -30,6 +27,7 @@ class AskResponse(BaseModel):
 
 def get_context_from_s3(question: str) -> str:
     try:
+        s3 = boto3.client("s3", region_name=AWS_REGION)
         response = s3.list_objects_v2(Bucket=S3_BUCKET)
         if "Contents" not in response:
             return ""
@@ -43,6 +41,7 @@ def get_context_from_s3(question: str) -> str:
         return ""
 
 def ask_bedrock(question: str, context: str) -> str:
+    bedrock = boto3.client("bedrock-runtime", region_name=AWS_REGION)
     if context:
         prompt = f"Use the following documents to answer the question.\n\nDocuments:\n{context}\n\nQuestion: {question}"
     else:
