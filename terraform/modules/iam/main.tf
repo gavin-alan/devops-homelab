@@ -109,7 +109,10 @@ resource "aws_iam_role_policy" "ecs_task_bedrock" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["bedrock:InvokeModel"]
+        Action   = ["bedrock:InvokeModel",
+          "aws-marketplace:ViewSubscriptions",
+          "aws-marketplace:Subscribe",
+          "aws-marketplace:Unsubscribe"]
         Resource = "*"
       },
       {
