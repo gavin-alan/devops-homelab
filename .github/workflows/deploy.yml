@@ -64,5 +64,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/devops-homelab
+            git pull origin main
             export GRAFANA_PASSWORD="${{ secrets.GRAFANA_PASSWORD }}"
+            docker-compose down
             docker-compose up -d
