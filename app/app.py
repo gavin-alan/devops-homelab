@@ -15,7 +15,7 @@ Instrumentator().instrument(app).expose(app)
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 S3_BUCKET = os.getenv("S3_BUCKET", "devops-homelab-documents")
-BEDROCK_MODEL_ID = "anthropic.claude-3-haiku-20240307-v1:0"
+BEDROCK_MODEL_ID = "us.anthropic.claude-3-5-haiku-20241022-v1:0"
 
 class AskRequest(BaseModel):
     question: str

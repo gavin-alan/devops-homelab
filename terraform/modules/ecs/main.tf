@@ -17,7 +17,7 @@ resource "aws_ecs_cluster" "main" {
 
 resource "aws_ecs_task_definition" "app" {
   family                   = "${var.project_name}-task"
-  network_mode             = "awsvpc"
+  network_mode             = "bridge"
   requires_compatibilities = ["EC2"]
   cpu                      = "256"
   memory                   = "512"
@@ -31,7 +31,7 @@ resource "aws_ecs_task_definition" "app" {
 
     portMappings = [{
       containerPort = 8000
-      hostPort      = 8000
+      hostPort      = 80
       protocol      = "tcp"
     }]
 
@@ -60,11 +60,6 @@ resource "aws_ecs_service" "app" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 1
   launch_type     = "EC2"
-
-  network_configuration {
-    subnets         = [var.subnet_id]
-    security_groups = [var.security_group_id]
-  }
 
   tags = {
     Project = var.project_name
