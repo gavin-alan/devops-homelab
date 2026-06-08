@@ -23,10 +23,16 @@ module "security_group" {
   vpc_id       = module.vpc.vpc_id
 }
 
-module "iam" {
-  source       = "./modules/iam"
+module "s3" {
+  source       = "./modules/s3"
   project_name = var.project_name
-  github_repo  = "gavin-alan/devops-homelab"
+}
+
+module "iam" {
+  source        = "./modules/iam"
+  project_name  = var.project_name
+  github_repo   = "gavin-alan/devops-homelab"
+  s3_bucket_arn = module.s3.bucket_arn
 }
 
 module "ec2" {

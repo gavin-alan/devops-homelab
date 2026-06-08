@@ -27,3 +27,8 @@ output "ecs_service_name" {
   description = "ECS service name"
   value       = module.ecs.service_name
 }
+
+output "s3_bucket_name" {
+  description = "S3 documents bucket name"
+  value       = module.s3.bucket_name
+}

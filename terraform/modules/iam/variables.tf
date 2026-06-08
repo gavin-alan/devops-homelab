@@ -7,3 +7,8 @@ variable "github_repo" {
   description = "GitHub repository in format owner/repo"
   type        = string
 }
+
+variable "s3_bucket_arn" {
+  description = "ARN of the S3 documents bucket"
+  type        = string
+}
