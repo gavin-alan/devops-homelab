@@ -1,7 +1,6 @@
-resource "aws_cloudwatch_log_group" "app" {
+﻿resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/${var.project_name}"
   retention_in_days = 7
-
   tags = {
     Project = var.project_name
   }
@@ -9,7 +8,6 @@ resource "aws_cloudwatch_log_group" "app" {
 
 resource "aws_ecs_cluster" "main" {
   name = "${var.project_name}-cluster"
-
   tags = {
     Project = var.project_name
   }
@@ -28,6 +26,17 @@ resource "aws_ecs_task_definition" "app" {
     name      = "${var.project_name}-container"
     image     = "${var.ecr_repository_url}:latest"
     essential = true
+
+    environment = [
+      {
+        name  = "CLOUD_PROVIDER"
+        value = "AWS"
+      },
+      {
+        name  = "APP_PHASE"
+        value = "Phase 4: FastAPI + AWS Bedrock + ECR/ECS"
+      }
+    ]
 
     portMappings = [{
       containerPort = 8000
@@ -60,7 +69,6 @@ resource "aws_ecs_service" "app" {
   task_definition = aws_ecs_task_definition.app.arn
   desired_count   = 1
   launch_type     = "EC2"
-
   tags = {
     Project = var.project_name
   }
