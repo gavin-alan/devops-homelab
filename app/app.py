@@ -66,7 +66,8 @@ def home():
     return {
         "name": "Gavin Alan - DevOps Home Lab",
         "version": "2.0.0",
-        "phase": "Phase 4: FastAPI + AWS Bedrock + ECR/ECS"
+        "phase": os.getenv("APP_PHASE", "Phase 4: FastAPI + REST API"),
+        "cloud": os.getenv("CLOUD_PROVIDER", "unknown")
     }
 
 @app.get("/health")
