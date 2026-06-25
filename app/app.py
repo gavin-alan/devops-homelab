@@ -7,6 +7,9 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 app = FastAPI(
     title="Gavin Alan - DevOps Home Lab",
@@ -15,6 +18,10 @@ app = FastAPI(
 )
 
 Instrumentator().instrument(app).expose(app)
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
@@ -89,12 +96,14 @@ def health():
     return {"status": "healthy"}
 
 @app.post("/ask", response_model=AskResponse)
-def ask(request: AskRequest):
+@limiter.limit("5/minute")
+@limiter.limit("60/minute")
+def ask(payload: AskRequest, request: Request):
     try:
-        context = get_context_from_s3(request.question)
-        answer = ask_bedrock(request.question, context)
+        context = get_context_from_s3(payload.question)
+        answer = ask_bedrock(payload.question, context)
         return AskResponse(
-            question=request.question,
+            question=payload.question,
             answer=answer,
             context_used=bool(context)
         )
