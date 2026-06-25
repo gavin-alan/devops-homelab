@@ -1,7 +1,10 @@
-import os
+﻿import os
 import json
 import boto3
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -12,6 +15,9 @@ app = FastAPI(
 )
 
 Instrumentator().instrument(app).expose(app)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 S3_BUCKET = os.getenv("S3_BUCKET", "devops-homelab-documents")
@@ -61,8 +67,16 @@ def ask_bedrock(question: str, context: str) -> str:
     result = json.loads(response["body"].read())
     return result["content"][0]["text"]
 
-@app.get("/")
-def home():
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+@app.get("/chat", response_class=HTMLResponse)
+def chat_page(request: Request):
+    return templates.TemplateResponse("chat.html", {"request": request})
+
+@app.get("/api/info")
+def api_info():
     return {
         "name": "Gavin Alan - DevOps Home Lab",
         "version": "2.0.0",

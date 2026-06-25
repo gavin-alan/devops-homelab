@@ -1,0 +1,43 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Gavin Alan - DevOps Home Lab{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<section style="margin-bottom: 3rem;">
+    <h1 style="font-size: 2rem; margin-bottom: 1rem;">DevOps Home Lab</h1>
+    <p style="color: #c5c8d1; max-width: 700px;">
+        A cloud-agnostic FastAPI application deployed on AWS, demonstrating an end-to-end
+        DevOps pipeline: Terraform-managed infrastructure, GitHub Actions CI/CD with keyless
+        OIDC authentication, containerized deployment via ECR/ECS behind an HTTPS load balancer,
+        a generative AI endpoint backed by AWS Bedrock with retrieval-augmented context from S3,
+        and live observability through Prometheus and Grafana.
+    </p>
+    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+        <a href="/chat" style="background: #3b82f6; color: white; padding: 0.6rem 1.4rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">Try the AI Assistant →</a>
+        <a href="/docs" target="_blank" style="border: 1px solid #3b82f6; color: #3b82f6; padding: 0.6rem 1.4rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem;">View API Docs</a>
+    </div>
+</section>
+
+<section style="margin-bottom: 3rem;">
+    <h2 style="font-size: 1.3rem; margin-bottom: 1rem; color: #e4e6eb;">Architecture</h2>
+    <div style="background: #161922; border: 1px solid #2a2d3a; border-radius: 8px; padding: 1.5rem; color: #9ca3af; font-size: 0.9rem;">
+        <p style="margin-bottom: 0.8rem;"><strong style="color: #e4e6eb;">CI/CD:</strong> GitHub Actions → OIDC auth to AWS → Docker build → ECR → ECS deploy</p>
+        <p style="margin-bottom: 0.8rem;"><strong style="color: #e4e6eb;">Compute:</strong> ECS (EC2 launch type) behind an Application Load Balancer with ACM-issued HTTPS</p>
+        <p style="margin-bottom: 0.8rem;"><strong style="color: #e4e6eb;">AI Layer:</strong> AWS Bedrock (Claude Haiku 4.5) with RAG context retrieved from S3</p>
+        <p><strong style="color: #e4e6eb;">Observability:</strong> Prometheus metrics scraped from the app and host, visualized in Grafana; CloudWatch alarms via SNS</p>
+    </div>
+</section>
+
+<section>
+    <h2 style="font-size: 1.3rem; margin-bottom: 1rem; color: #e4e6eb;">Live Metrics</h2>
+    <p style="color: #9ca3af; font-size: 0.9rem; margin-bottom: 1rem;">
+        Real traffic and resource usage from this deployment, captured via Prometheus + Grafana.
+    </p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+        <img src="/static/images/metric-requests.webp" alt="HTTP Request Rate" style="width: 100%; border-radius: 8px; border: 1px solid #2a2d3a;">
+        <img src="/static/images/metric-total.webp" alt="Total Requests" style="width: 100%; border-radius: 8px; border: 1px solid #2a2d3a;">
+        <img src="/static/images/metric-cpu.webp" alt="CPU Usage %" style="width: 100%; border-radius: 8px; border: 1px solid #2a2d3a;">
+    </div>
+</section>
+{% endblock %}
