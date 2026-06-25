@@ -1,4 +1,4 @@
-terraform {
+﻿terraform {
   required_version = ">= 1.5.0"
   required_providers {
     aws = {
@@ -59,6 +59,16 @@ module "ecs" {
   task_role_arn           = module.iam.ecs_task_role_arn
   subnet_id               = module.vpc.subnet_id
   security_group_id       = module.security_group.security_group_id
+}
+
+module "alb" {
+  source                 = "./modules/alb"
+  project_name           = var.project_name
+  vpc_id                 = module.vpc.vpc_id
+  subnet_ids              = [module.vpc.subnet_id, module.vpc.subnet_id_b]
+  alb_security_group_id  = module.security_group.alb_security_group_id
+  instance_id              = module.ec2.instance_id
+  domain_name             = "devops.gavinalan.com"
 }
 
 module "cloudwatch" {

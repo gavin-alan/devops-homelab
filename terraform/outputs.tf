@@ -1,4 +1,4 @@
-output "instance_public_ip" {
+﻿output "instance_public_ip" {
   description = "Elastic IP of the EC2 instance"
   value       = module.ec2.public_ip
 }
@@ -31,4 +31,9 @@ output "ecs_service_name" {
 output "s3_bucket_name" {
   description = "S3 documents bucket name"
   value       = module.s3.bucket_name
+}
+
+output "alb_dns_name" {
+  description = "Public DNS name of the ALB"
+  value       = module.alb.alb_dns_name
 }

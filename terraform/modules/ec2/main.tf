@@ -1,4 +1,4 @@
-data "aws_ami" "amazon_linux_2" {
+﻿data "aws_ami" "amazon_linux_2" {
   most_recent = true
   owners      = ["amazon"]
   filter {
@@ -19,6 +19,10 @@ resource "aws_instance" "main" {
   vpc_security_group_ids      = [var.security_group_id]
   key_name                    = aws_key_pair.main.key_name
   iam_instance_profile        = var.instance_profile_name
+
+  lifecycle {
+    ignore_changes = [ami]
+  }
 
   tags = {
     Name    = "${var.project_name}-server"

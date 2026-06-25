@@ -4,11 +4,11 @@ End-to-end DevOps pipeline built for learning and portfolio purposes.
 
 ## Status
 
-Phase 4 complete. Phase 5 in progress — ALB, multi-environment Terraform workspaces, frontend.
+Phase 4 complete. Phase 5 in progress — ALB and HTTPS complete, multi-environment Terraform workspaces and frontend remaining.
 
 ## Architecture
 
-Every push to `main` triggers the GitHub Actions CI/CD pipeline. Actions authenticates to AWS via OIDC (no stored credentials), builds the Docker image, pushes it to ECR, then triggers an ECS service update — ECS pulls the latest image and redeploys automatically. The FastAPI app runs in ECS and exposes a `/ask` endpoint backed by AWS Bedrock (Claude Haiku 4.5) using S3 documents as RAG context. Prometheus scrapes app and system metrics which Grafana visualizes in real time. CloudWatch handles AWS-level alerting via SNS.
+Every push to `main` triggers the GitHub Actions CI/CD pipeline. Actions authenticates to AWS via OIDC (no stored credentials), builds the Docker image, pushes it to ECR, then triggers an ECS service update — ECS pulls the latest image and redeploys automatically. An Application Load Balancer fronts the ECS service, terminating HTTPS with an ACM-issued certificate and routing to the EC2 instance over HTTP internally; the EC2 security group only accepts traffic on that port from the ALB itself. The FastAPI app runs in ECS and exposes a `/ask` endpoint backed by AWS Bedrock (Claude Haiku 4.5) using S3 documents as RAG context. Prometheus scrapes app and system metrics which Grafana visualizes in real time. CloudWatch handles AWS-level alerting via SNS.
 
 ```mermaid
 graph LR
@@ -16,8 +16,12 @@ graph LR
     gh -->|OIDC auth| aws[AWS]
     gh -->|docker build + push| ecr[ECR]
     gh -->|deploy| ecs[ECS Service]
+    user[User] -->|HTTPS| alb[Application Load Balancer]
+    alb -->|ACM cert| acm[ACM Certificate]
+    alb -->|HTTP, ALB security group only| ec2[EC2 Instance]
     ecs -->|pull image| ecr
-    ecs -->|runs| app[FastAPI App]
+    ecs -->|runs on| ec2
+    ec2 -->|runs| app[FastAPI App]
     app -->|AI inference| bedrock[AWS Bedrock\nClaude Haiku 4.5]
     bedrock -->|RAG context| s3[S3 Documents]
     app -->|metrics| prom[Prometheus]
@@ -28,18 +32,21 @@ graph LR
 
 ## Stack
 
-- **Terraform** — AWS infrastructure provisioning with reusable modules (vpc, ec2, security_group, ecr, iam, ecs, s3, cloudwatch)
+- **Terraform** — AWS infrastructure provisioning with reusable modules (vpc, ec2, security_group, ecr, iam, ecs, alb, s3, cloudwatch)
 - **Ansible** — server configuration + security hardening
 - **Docker** — app containerization
 - **GitHub Actions** — CI/CD pipeline (builds image, pushes to ECR, deploys to ECS via OIDC — no stored AWS credentials)
 - **AWS ECR** — private Docker image registry
 - **AWS ECS** — container orchestration (EC2 launch type)
+- **AWS ALB** — Application Load Balancer with HTTPS termination (ACM certificate, auto HTTP→HTTPS redirect)
+- **AWS ACM** — managed TLS certificate, DNS-validated
 - **AWS Bedrock** — Claude Haiku 4.5 AI endpoint with RAG pattern over S3 documents
 - **AWS S3** — document storage for RAG pattern
 - **AWS CloudWatch** — ECS metrics, log aggregation, CPU/memory/task alarms via SNS
 - **FastAPI** — Python REST API with auto-generated Swagger docs and Pydantic validation
-- **Prometheus** — metrics collection
-- **Grafana** — monitoring dashboards (HTTP requests, response time, CPU, memory)
+- **Prometheus** — metrics collection (app metrics via `prometheus-fastapi-instrumentator`, host metrics via node-exporter)
+- **Grafana** — monitoring dashboards (HTTP request rate, average response time, total requests, CPU, memory)
+- **Cloudflare** — DNS for custom domain (`devops.gavinalan.com`)
 
 ## Phases
 
@@ -55,10 +62,14 @@ graph LR
   - [x] AWS Bedrock — RAG endpoint (Claude Haiku 4.5)
   - [x] AWS CloudWatch — alarms and log aggregation
 - [ ] Phase 5: Production hardening
-  - [ ] Application Load Balancer
+  - [x] Application Load Balancer with HTTPS (ACM cert, DNS validation via Cloudflare)
+  - [x] EC2 security group locked down to ALB-only on app port
+  - [x] Prometheus scrape config fixed to target live app metrics endpoint
+  - [x] ECS container health check migrated off `curl` (not present in slim base image) to a Python-native check
   - [ ] Multi-environment Terraform workspaces (dev/staging/prod)
   - [ ] Frontend for /ask endpoint
   - [ ] Monitoring stack migrated to ECS
+  - [ ] Automate monitoring config sync to EC2 (currently manual `scp`; candidate for Ansible playbook)
 
 ## API Endpoints
 
@@ -70,11 +81,11 @@ graph LR
 
 ## Live Endpoints
 
-- App: http://107.21.212.161
-- Swagger Docs: http://107.21.212.161/docs
+- App: https://devops.gavinalan.com
+- Swagger Docs: https://devops.gavinalan.com/docs
 - Grafana: http://107.21.212.161:3000
 - Prometheus: http://107.21.212.161:9090
-- Metrics: http://107.21.212.161/metrics
+- Metrics: https://devops.gavinalan.com/metrics
 
 > Note: instance may be stopped periodically to manage costs — endpoints available on request.
 

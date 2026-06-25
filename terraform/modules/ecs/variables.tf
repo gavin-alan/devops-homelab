@@ -1,4 +1,4 @@
-variable "project_name" {
+﻿variable "project_name" {
   description = "Project name used for tagging"
   type        = string
 }
@@ -31,4 +31,16 @@ variable "subnet_id" {
 variable "security_group_id" {
   description = "Security group ID for ECS service"
   type        = string
+}
+
+variable "deployment_minimum_healthy_percent" {
+  description = "Minimum healthy percent during deployment (0 required on single t3.micro to avoid placement failures during task replacement)"
+  type        = number
+  default     = 0
+}
+
+variable "deployment_maximum_percent" {
+  description = "Maximum percent during deployment"
+  type        = number
+  default     = 100
 }

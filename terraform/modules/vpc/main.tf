@@ -1,4 +1,4 @@
-resource "aws_vpc" "main" {
+﻿resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   tags = {
@@ -10,9 +10,21 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr
+  availability_zone       = var.availability_zone_a
   map_public_ip_on_launch = true
   tags = {
     Name    = "${var.project_name}-subnet"
+    Project = var.project_name
+  }
+}
+
+resource "aws_subnet" "public_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.subnet_cidr_b
+  availability_zone       = var.availability_zone_b
+  map_public_ip_on_launch = true
+  tags = {
+    Name    = "${var.project_name}-subnet-b"
     Project = var.project_name
   }
 }
@@ -39,5 +51,10 @@ resource "aws_route_table" "public" {
 
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "public_b" {
+  subnet_id      = aws_subnet.public_b.id
   route_table_id = aws_route_table.public.id
 }
