@@ -1,5 +1,6 @@
 ﻿import os
 import json
+import logging
 import boto3
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
@@ -10,6 +11,12 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(message)s",
+)
+logger = logging.getLogger("visits")
 
 app = FastAPI(
     title="Gavin Alan - DevOps Home Lab",
@@ -37,6 +44,13 @@ class AskResponse(BaseModel):
     question: str
     answer: str
     context_used: bool
+
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        # X-Forwarded-For can be a comma-separated chain; the first entry is the original client
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 def get_context_from_s3(question: str) -> str:
     try:
@@ -76,10 +90,12 @@ def ask_bedrock(question: str, context: str) -> str:
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
+    logger.info(f"VISIT | path=/ | ip={get_client_ip(request)}")
     return templates.TemplateResponse("home.html", {"request": request})
 
 @app.get("/chat", response_class=HTMLResponse)
 def chat_page(request: Request):
+    logger.info(f"VISIT | path=/chat | ip={get_client_ip(request)}")
     return templates.TemplateResponse("chat.html", {"request": request})
 
 @app.get("/api/info")
@@ -99,6 +115,7 @@ def health():
 @limiter.limit("5/minute")
 @limiter.limit("60/minute")
 def ask(payload: AskRequest, request: Request):
+    logger.info(f"ASK | ip={get_client_ip(request)} | question={payload.question!r}")
     try:
         context = get_context_from_s3(payload.question)
         answer = ask_bedrock(payload.question, context)

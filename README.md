@@ -8,7 +8,7 @@ Phase 4 complete. Phase 5 in progress — ALB/HTTPS and frontend complete, multi
 
 ## Architecture
 
-Every push to `main` triggers the GitHub Actions CI/CD pipeline. Actions authenticates to AWS via OIDC (no stored credentials), builds the Docker image, pushes it to ECR, then triggers an ECS service update — ECS pulls the latest image and redeploys automatically. An Application Load Balancer fronts the ECS service, terminating HTTPS with an ACM-issued certificate and routing to the EC2 instance over HTTP internally; the EC2 security group only accepts traffic on that port from the ALB itself. The FastAPI app serves a server-rendered frontend (home page and an interactive AI chat page) alongside its REST API, including a `/ask` endpoint backed by AWS Bedrock (Claude Haiku 4.5) using S3 documents as RAG context. Prometheus scrapes app and system metrics which Grafana visualizes in real time. CloudWatch handles AWS-level alerting via SNS.
+Every push to `main` triggers the GitHub Actions CI/CD pipeline. Actions authenticates to AWS via OIDC (no stored credentials), builds the Docker image, pushes it to ECR, then triggers an ECS service update — ECS pulls the latest image and redeploys automatically. An Application Load Balancer fronts the ECS service, terminating HTTPS with an ACM-issued certificate and routing to the EC2 instance over HTTP internally; the EC2 security group only accepts traffic on that port from the ALB itself. The FastAPI app serves a server-rendered frontend (home page and an interactive AI chat page) alongside its REST API, including a `/ask` endpoint backed by AWS Bedrock (Claude Haiku 4.5) using S3 documents as RAG context. The `/ask` endpoint is rate-limited (per-IP and global caps) to protect against abuse and control inference cost on a publicly exposed AI endpoint. Prometheus scrapes app and system metrics which Grafana visualizes in real time. CloudWatch handles AWS-level alerting via SNS.
 
 ```mermaid
 graph LR
@@ -22,7 +22,7 @@ graph LR
     ecs -->|pull image| ecr
     ecs -->|runs on| ec2
     ec2 -->|runs| app[FastAPI App + Frontend]
-    app -->|AI inference| bedrock[AWS Bedrock\nClaude Haiku 4.5]
+    app -->|AI inference, rate-limited| bedrock[AWS Bedrock\nClaude Haiku 4.5]
     bedrock -->|RAG context| s3[S3 Documents]
     app -->|metrics| prom[Prometheus]
     prom -->|dashboards| grafana[Grafana]
@@ -40,7 +40,7 @@ graph LR
 - **AWS ECS** — container orchestration (EC2 launch type)
 - **AWS ALB** — Application Load Balancer with HTTPS termination (ACM certificate, auto HTTP→HTTPS redirect)
 - **AWS ACM** — managed TLS certificate, DNS-validated
-- **AWS Bedrock** — Claude Haiku 4.5 AI endpoint with RAG pattern over S3 documents
+- **AWS Bedrock** — Claude Haiku 4.5 AI endpoint with RAG pattern over S3 documents, rate-limited via slowapi
 - **AWS S3** — document storage for RAG pattern
 - **AWS CloudWatch** — ECS metrics, log aggregation, CPU/memory/task alarms via SNS
 - **FastAPI** — Python REST API with auto-generated Swagger docs and Pydantic validation; also serves a server-rendered frontend via Jinja2
@@ -67,6 +67,7 @@ graph LR
   - [x] Prometheus scrape config fixed to target live app metrics endpoint
   - [x] ECS container health check migrated off `curl` (not present in slim base image) to a Python-native check
   - [x] Frontend for /ask endpoint — home page + interactive chat UI, server-rendered via Jinja2
+  - [x] Rate limiting on /ask (5/min per IP, 60/min global) to protect Bedrock/S3 cost on public traffic
   - [ ] Multi-environment Terraform workspaces (dev/staging/prod)
   - [ ] Monitoring stack migrated to ECS
   - [ ] Automate monitoring config sync to EC2 (currently manual `scp`; candidate for Ansible playbook)
@@ -81,7 +82,7 @@ graph LR
 - **GET /api/info** — App info (JSON)
 - **GET /health** — Health check (used by ECS)
 - **GET /metrics** — Prometheus metrics
-- **POST /ask** — AI endpoint (AWS Bedrock + Claude Haiku 4.5)
+- **POST /ask** — AI endpoint (AWS Bedrock + Claude Haiku 4.5), rate-limited to 5 requests/minute per IP, 60/minute globally
 - **GET /docs** — Swagger UI
 
 ## Live Endpoints
