@@ -90,12 +90,12 @@ def ask_bedrock(question: str, context: str) -> str:
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    logger.info(f"VISIT | path=/ | ip={get_client_ip(request)}")
+    logger.info(f"VISIT | path=/ | ip={get_client_ip(request)} | ua={request.headers.get('user-agent', 'unknown')}")
     return templates.TemplateResponse("home.html", {"request": request})
 
 @app.get("/chat", response_class=HTMLResponse)
 def chat_page(request: Request):
-    logger.info(f"VISIT | path=/chat | ip={get_client_ip(request)}")
+    logger.info(f"VISIT | path=/chat | ip={get_client_ip(request)} | ua={request.headers.get('user-agent', 'unknown')}")
     return templates.TemplateResponse("chat.html", {"request": request})
 
 @app.get("/api/info")
@@ -115,7 +115,7 @@ def health():
 @limiter.limit("5/minute")
 @limiter.limit("60/minute")
 def ask(payload: AskRequest, request: Request):
-    logger.info(f"ASK | ip={get_client_ip(request)} | question={payload.question!r}")
+    logger.info(f"ASK | ip={get_client_ip(request)} | question={payload.question!r} | ua={request.headers.get('user-agent', 'unknown')}")
     try:
         context = get_context_from_s3(payload.question)
         answer = ask_bedrock(payload.question, context)
