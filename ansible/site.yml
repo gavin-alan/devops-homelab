@@ -76,3 +76,40 @@
 
     - name: Reload firewalld
       command: firewall-cmd --reload
+
+    - name: Install docker-compose
+      get_url:
+        url: https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: "0755"
+
+    - name: Clone devops-homelab repo
+      git:
+        repo: https://github.com/gavin-alan/devops-homelab.git
+        dest: /home/ec2-user/devops-homelab
+        version: main
+      become_user: ec2-user
+
+    - name: Create and enable swap file
+      shell: |
+        set -e
+        if [ ! -f /swapfile ]; then
+          dd if=/dev/zero of=/swapfile bs=1M count=1024
+          chmod 600 /swapfile
+          mkswap /swapfile
+        fi
+        swapon --show=NAME --noheadings | grep -qx /swapfile || swapon /swapfile
+      args:
+        executable: /bin/bash
+
+    - name: Persist swap file in fstab
+      lineinfile:
+        path: /etc/fstab
+        line: "/swapfile swap swap defaults 0 0"
+        state: present
+
+    # Restart Docker to recreate its firewall rules after the firewalld reload
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted
