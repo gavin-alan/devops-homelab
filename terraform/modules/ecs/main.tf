@@ -35,6 +35,10 @@ resource "aws_ecs_task_definition" "app" {
       {
         name  = "APP_PHASE"
         value = "Phase 4: FastAPI + AWS Bedrock + ECR/ECS"
+      },
+      {
+        name  = "S3_BUCKET"
+        value = var.s3_bucket_name
       }
     ]
 

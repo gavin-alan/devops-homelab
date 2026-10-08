@@ -33,6 +33,11 @@ variable "security_group_id" {
   type        = string
 }
 
+variable "s3_bucket_name" {
+  description = "Name of the S3 documents bucket used for RAG"
+  type        = string
+}
+
 variable "deployment_minimum_healthy_percent" {
   description = "Minimum healthy percent during deployment (0 required on single t3.micro to avoid placement failures during task replacement)"
   type        = number

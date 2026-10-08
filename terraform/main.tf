@@ -59,6 +59,7 @@ module "ecs" {
   task_role_arn           = module.iam.ecs_task_role_arn
   subnet_id               = module.vpc.subnet_id
   security_group_id       = module.security_group.security_group_id
+  s3_bucket_name          = module.s3.bucket_name
 }
 
 module "alb" {
