@@ -64,6 +64,26 @@ resource "aws_iam_role_policy" "github_actions_ecr" {
           "ecs:DescribeServices"
         ]
         Resource = "arn:aws:ecs:us-east-1:${data.aws_caller_identity.current.account_id}:service/${var.project_name}-cluster/${var.project_name}-service"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:SendCommand"]
+        Resource = ["arn:aws:ec2:us-east-1:${data.aws_caller_identity.current.account_id}:instance/*"]
+        Condition = {
+          StringEquals = {
+            "ssm:resourceTag/Project" = var.project_name
+          }
+        }
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:SendCommand"]
+        Resource = ["arn:aws:ssm:us-east-1::document/AWS-RunShellScript"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetCommandInvocation"]
+        Resource = ["*"]
       }
     ]
   })
@@ -146,6 +166,27 @@ resource "aws_iam_role" "ec2_instance" {
 resource "aws_iam_role_policy_attachment" "ec2_instance_ecs" {
   role       = aws_iam_role.ec2_instance.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_instance_ssm" {
+  role       = aws_iam_role.ec2_instance.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy" "ec2_instance_grafana_param" {
+  name = "${var.project_name}-ec2-instance-grafana-param-policy"
+  role = aws_iam_role.ec2_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
+        Resource = "arn:aws:ssm:us-east-1:${data.aws_caller_identity.current.account_id}:parameter/${var.project_name}/grafana-password"
+      }
+    ]
+  })
 }
 
 resource "aws_iam_instance_profile" "ec2_instance" {
