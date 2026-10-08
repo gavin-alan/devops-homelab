@@ -12,3 +12,8 @@ variable "project_name" {
   description = "Project name used for tagging"
   default     = "devops-homelab"
 }
+
+variable "my_ip" {
+  description = "Public IPv4 address allowed to SSH, without /32"
+  type        = string
+}
