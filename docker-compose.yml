@@ -16,6 +16,9 @@
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SERVER_ROOT_URL=https://devops.gavinalan.com/grafana/
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
+      - GOMEMLIMIT=300MiB
     volumes:
       - grafana-data:/var/lib/grafana
     restart: unless-stopped
