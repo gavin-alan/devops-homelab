@@ -1,4 +1,4 @@
-﻿terraform {
+terraform {
   required_version = ">= 1.5.0"
   required_providers {
     aws = {
@@ -10,6 +10,10 @@
 
 provider "aws" {
   region = var.aws_region
+}
+
+locals {
+  alert_email = "cloud01@gavinalan.com"
 }
 
 module "vpc" {
@@ -64,17 +68,24 @@ module "ecs" {
 }
 
 module "alb" {
-  source                 = "./modules/alb"
-  project_name           = var.project_name
-  vpc_id                 = module.vpc.vpc_id
-  subnet_ids              = [module.vpc.subnet_id, module.vpc.subnet_id_b]
-  alb_security_group_id  = module.security_group.alb_security_group_id
-  instance_id              = module.ec2.instance_id
-  domain_name             = "devops.gavinalan.com"
+  source                = "./modules/alb"
+  project_name          = var.project_name
+  vpc_id                = module.vpc.vpc_id
+  subnet_ids            = [module.vpc.subnet_id, module.vpc.subnet_id_b]
+  alb_security_group_id = module.security_group.alb_security_group_id
+  instance_id           = module.ec2.instance_id
+  domain_name           = "devops.gavinalan.com"
 }
 
 module "cloudwatch" {
   source       = "./modules/cloudwatch"
   project_name = var.project_name
-  alarm_email  = "cloud01@gavinalan.com"
+  alarm_email  = local.alert_email
+}
+
+module "budget" {
+  source             = "./modules/budget"
+  project_name       = var.project_name
+  monthly_budget_usd = var.monthly_budget_usd
+  alert_email        = local.alert_email
 }
