@@ -2,6 +2,7 @@
 import json
 import logging
 import boto3
+from botocore.exceptions import ClientError
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -124,5 +125,15 @@ def ask(payload: AskRequest, request: Request):
             answer=answer,
             context_used=bool(context)
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code", "")
+        logger.error(f"BEDROCK_ERROR | code={code} | {e}")
+        if code in ("ThrottlingException", "ServiceQuotaExceededException", "TooManyRequestsException"):
+            raise HTTPException(
+                status_code=503,
+                detail="The AI assistant is temporarily unavailable. Please try again later.",
+            )
+        raise HTTPException(status_code=500, detail="Something went wrong while generating an answer.")
+    except Exception:
+        logger.exception("ASK_ERROR")
+        raise HTTPException(status_code=500, detail="Something went wrong while generating an answer.")

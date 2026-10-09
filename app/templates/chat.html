@@ -155,13 +155,25 @@
             });
 
             if (!response.ok) {
-                throw new Error('Request failed with status ' + response.status);
+                let message = 'Request failed with status ' + response.status;
+                try {
+                    const errBody = await response.json();
+                    if (errBody && typeof errBody.detail === 'string') {
+                        message = errBody.detail;
+                    }
+                } catch (_) {
+                    // body wasn't JSON; keep the generic message
+                }
+                if (response.status === 429) {
+                    message = 'Too many questions too quickly. Please wait a minute and try again.';
+                }
+                throw new Error(message);
             }
 
             const data = await response.json();
             addMessage(data.answer, 'assistant');
         } catch (err) {
-            addMessage('Sorry, something went wrong: ' + err.message, 'assistant');
+            addMessage(err.message, 'assistant');
         } finally {
             button.disabled = false;
             button.textContent = 'Ask';
